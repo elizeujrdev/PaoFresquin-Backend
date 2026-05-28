@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.db import transaction
-from django.utils import timezone
+from core.datetime_br import localdate
 from rest_framework.exceptions import ValidationError
 
 from clientes.models import Cliente
@@ -51,7 +51,7 @@ def criar_venda(*, funcionario, itens_data, forma_pagamento, cliente=None, desco
         desconto=desconto,
         total=total,
         status_fiado=StatusFiado.PENDENTE if forma_pagamento == FormaPagamento.FIADO else None,
-        vencimento_fiado=(timezone.now().date() + timedelta(days=30))
+        vencimento_fiado=(localdate() + timedelta(days=30))
         if forma_pagamento == FormaPagamento.FIADO
         else None,
     )

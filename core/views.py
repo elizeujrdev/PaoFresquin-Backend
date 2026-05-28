@@ -3,7 +3,16 @@ from decimal import Decimal
 
 from django.db.models import Count, F, Sum
 from django.db.models.functions import TruncDate
-from django.utils import timezone
+
+from core.datetime_br import (
+    TZ_BR,
+    end_of_day,
+    format_date_br,
+    format_datetime_br,
+    localdate,
+    localnow,
+    start_of_day,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,9 +29,11 @@ class DashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        hoje = timezone.now().date()
+        hoje = localdate()
         vendas_hoje = Venda.objects.filter(
-            criado_em__date=hoje, status=StatusVenda.ATIVA
+            criado_em__gte=start_of_day(hoje),
+            criado_em__lte=end_of_day(hoje),
+            status=StatusVenda.ATIVA,
         )
         total_hoje = vendas_hoje.aggregate(t=Sum("total"))["t"] or Decimal("0")
         count_hoje = vendas_hoje.count()
@@ -56,7 +67,7 @@ class DashboardView(APIView):
             em_ferias_ate__gte=hoje, ativo=True
         ).first()
 
-        hora = timezone.now().hour
+        hora = localnow().hour
         saudacao = "Bom dia" if hora < 12 else "Boa tarde" if hora < 18 else "Boa noite"
 
         return Response(
@@ -106,7 +117,7 @@ class AvisosView(APIView):
                 Notificacao.objects.order_by("-enviada_em").values_list("enviada_em", flat=True).first()
             )
             sub = (
-                f"Última notificação: {ultima.strftime('%d/%m/%Y')}"
+                f"Última notificação: {format_date_br(ultima)}"
                 if ultima
                 else "Notificações pendentes de envio"
             )
@@ -128,7 +139,7 @@ class AvisosView(APIView):
                 }
             )
 
-        func = Funcionario.objects.filter(em_ferias_ate__gte=timezone.now().date()).first()
+        func = Funcionario.objects.filter(em_ferias_ate__gte=localdate()).first()
         if func:
             avisos.append(
                 {
@@ -168,7 +179,7 @@ class RelatoriosVendasView(APIView):
         produto_id = request.query_params.get("produto")
         funcionario_id = request.query_params.get("funcionario")
 
-        hoje = timezone.now().date()
+        hoje = localdate()
         if not data_fim:
             data_fim = hoje
         else:
@@ -180,8 +191,8 @@ class RelatoriosVendasView(APIView):
 
         vendas = Venda.objects.filter(
             status=StatusVenda.ATIVA,
-            criado_em__date__gte=data_inicio,
-            criado_em__date__lte=data_fim,
+            criado_em__gte=start_of_day(data_inicio),
+            criado_em__lte=end_of_day(data_fim),
         )
         if funcionario_id:
             vendas = vendas.filter(funcionario_id=funcionario_id)
@@ -208,15 +219,16 @@ class RelatoriosVendasView(APIView):
         )
 
         por_dia = (
-            vendas.annotate(dia=TruncDate("criado_em"))
+            vendas.annotate(dia=TruncDate("criado_em", tzinfo=TZ_BR))
             .values("dia")
             .annotate(total=Sum("total"), qtd=Count("id"))
             .order_by("dia")
         )
+        dias_semana = ("seg", "ter", "qua", "qui", "sex", "sáb", "dom")
         dias_labels = []
         dias_valores = []
         for row in por_dia:
-            dias_labels.append(row["dia"].strftime("%a")[:3].lower())
+            dias_labels.append(dias_semana[row["dia"].weekday()])
             dias_valores.append(float(row["total"]))
 
         from vendas.models import ItemVenda
@@ -249,8 +261,8 @@ class RelatoriosVendasView(APIView):
         fim_anterior = data_inicio - timedelta(days=1)
         vendas_anterior = Venda.objects.filter(
             status=StatusVenda.ATIVA,
-            criado_em__date__gte=inicio_anterior,
-            criado_em__date__lte=fim_anterior,
+            criado_em__gte=start_of_day(inicio_anterior),
+            criado_em__lte=end_of_day(fim_anterior),
         )
         total_anterior = vendas_anterior.aggregate(t=Sum("total"))["t"] or Decimal("0")
         count_anterior = vendas_anterior.count()
@@ -332,10 +344,10 @@ class InadimplenciaView(APIView):
                     "numero": v.numero,
                     "cliente": v.cliente.nome if v.cliente else "",
                     "total": str(v.total),
-                    "data_compra": v.criado_em.strftime("%d/%m/%Y"),
+                    "data_compra": format_date_br(v.criado_em),
                     "status_fiado": v.status_fiado,
                     "ultima_notificacao": (
-                        ultima_notif.enviada_em.strftime("%d/%m/%Y %H:%M")
+                        format_datetime_br(ultima_notif.enviada_em)
                         if ultima_notif
                         else None
                     ),

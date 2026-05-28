@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     "clientes",
     "vendas",
     "funcionarios",
-    "core",
+    "core.apps.CoreConfig",
 ]
 
 MIDDLEWARE = [

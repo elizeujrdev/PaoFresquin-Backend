@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from django.utils import timezone
+
 CPFS_NEGATIVADOS = {
     "47210388290",
     "11111111111",
@@ -24,7 +26,7 @@ def _limpar_cpf(cpf: str) -> str:
 
 def consultar_cpf(cpf: str) -> ResultadoSerasa:
     limpo = _limpar_cpf(cpf)
-    agora = datetime.now()
+    agora = timezone.now()
 
     if limpo in CPFS_NEGATIVADOS or limpo.endswith("999"):
         return ResultadoSerasa(

@@ -63,17 +63,19 @@ class FuncionarioSerializer(serializers.ModelSerializer):
 
     def get_pontos(self, obj):
         from datetime import timedelta
-        from django.utils import timezone
 
-        inicio = timezone.now().date() - timedelta(days=7)
+        from core.datetime_br import localdate
+
+        inicio = localdate() - timedelta(days=7)
         registros = obj.pontos.filter(data__gte=inicio).order_by("data", "hora")
         return RegistroPontoSerializer(registros, many=True).data
 
     def get_pontos_resumo(self, obj):
         from datetime import timedelta
-        from django.utils import timezone
 
-        hoje = timezone.now().date()
+        from core.datetime_br import localdate
+
+        hoje = localdate()
         inicio = hoje - timedelta(days=6)
         dias = []
         for i in range(7):

@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from clientes.models import Cliente
+from core.datetime_br import TZ_BR, localdate, localnow
 from funcionarios.models import (
     Ausencia,
     Cargo,
@@ -135,7 +136,7 @@ class Command(BaseCommand):
             nome_arquivo="férias programadas",
         )
 
-        hoje = timezone.now().date()
+        hoje = localdate()
         for i, (entrada, saida) in enumerate(
             [(time(4, 58), time(12, 2)), (time(5, 1), time(12, 5)), (time(4, 55), time(11, 58))]
         ):
@@ -205,12 +206,12 @@ class Command(BaseCommand):
             cliente_desde=date(2025, 1, 15),
         )
 
-        agora = timezone.now()
+        agora = localnow()
         numero = 1800
         funcionarios = [func_ana]
 
         for dia_offset in range(14, -1, -1):
-            dia = agora.date() - timedelta(days=dia_offset)
+            dia = localdate() - timedelta(days=dia_offset)
             vendas_no_dia = random.randint(4, 12) if dia_offset > 0 else random.randint(6, 14)
 
             for _ in range(vendas_no_dia):
@@ -231,7 +232,7 @@ class Command(BaseCommand):
                             )
 
                 hora_venda = time(random.randint(6, 18), random.randint(0, 59))
-                criado = timezone.make_aware(datetime.combine(dia, hora_venda))
+                criado = timezone.make_aware(datetime.combine(dia, hora_venda), TZ_BR)
 
                 p1 = random.choice(produtos)
                 qtd = Decimal("0.420") if p1.unidade == UnidadeMedida.PESO else Decimal(str(random.randint(1, 4)))

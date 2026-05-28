@@ -1,10 +1,10 @@
 """Mock de feeds de câmeras."""
 
-from datetime import datetime
+from core.datetime_br import format_datetime_sec_br, localnow
 
 
 def listar_cameras():
-    agora = datetime.now()
+    agora = localnow()
     return [
         {
             "id": "cam-01",
@@ -15,7 +15,7 @@ def listar_cameras():
             "online": True,
             "stream_url": None,
             "placeholder": "[ feed da câmera ]",
-            "timestamp": agora.strftime("%d/%m/%Y %H:%M:%S"),
+            "timestamp": format_datetime_sec_br(agora),
         },
         {
             "id": "cam-02",
@@ -26,6 +26,6 @@ def listar_cameras():
             "online": True,
             "stream_url": None,
             "placeholder": "[ feed da câmera ]",
-            "timestamp": agora.strftime("%d/%m/%Y %H:%M:%S"),
+            "timestamp": format_datetime_sec_br(agora),
         },
     ]

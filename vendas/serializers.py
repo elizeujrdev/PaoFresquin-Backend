@@ -3,6 +3,7 @@ from rest_framework import serializers
 from clientes.models import Cliente
 from funcionarios.models import Funcionario
 from produtos.models import Produto
+from core.datetime_br import format_time_br
 from vendas.models import ItemVenda, Venda
 from vendas.services import cancelar_venda, criar_venda
 
@@ -113,4 +114,4 @@ class VendaListSerializer(serializers.ModelSerializer):
         return obj.cliente.nome if obj.cliente else "Consumidor"
 
     def get_hora(self, obj):
-        return obj.criado_em.strftime("%H:%M")
+        return format_time_br(obj.criado_em)
