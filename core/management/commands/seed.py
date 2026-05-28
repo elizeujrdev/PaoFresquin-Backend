@@ -42,7 +42,28 @@ FORMAS = [
 class Command(BaseCommand):
     help = "Popula o banco com dados de demonstração (dados reais no SQLite)"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--if-empty",
+            action="store_true",
+            help="Executa o seed apenas se o banco estiver vazio (não apaga dados existentes).",
+        )
+
     def handle(self, *args, **options):
+        if options.get("if_empty"):
+            has_data = any(
+                model.objects.exists()
+                for model in (User, Produto, Categoria, Cliente, Funcionario, Venda)
+            )
+            if has_data:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "Seed ignorado: banco já possui dados. "
+                        "Use sem --if-empty para recriar tudo."
+                    )
+                )
+                return
+
         self.stdout.write("Recriando dados de demonstração...")
 
         Notificacao.objects.all().delete()
