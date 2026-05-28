@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+media/
+
+# Ignore local DB; force-add seeded copy for Vercel deploy: git add -f db.sqlite3
+db.sqlite3
+db.sqlite3-wal
+db.sqlite3-shm
